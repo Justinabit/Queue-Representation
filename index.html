@@ -3,748 +3,1135 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Queue Simulator — FIFO in motion</title>
+<title>Queue Simulator — every flavour of FIFO</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-
   :root{
-    /* ---- light theme tokens (default) ---- */
-    --bg: #EEF1F6;
-    --surface: #FFFFFF;
-    --surface-2: #F4F6FA;
-    --border: #D8DEE7;
-    --text: #141922;
-    --text-dim: #5C6675;
-    --accent-teal: #0E7F73;
-    --accent-teal-soft: rgba(14,127,115,.12);
-    --accent-amber: #A9700A;
-    --accent-amber-soft: rgba(169,112,10,.14);
-    --accent-coral: #BE3A32;
-    --accent-coral-soft: rgba(190,58,50,.12);
-    --shadow: 0 1px 2px rgba(20,25,34,.06), 0 8px 24px rgba(20,25,34,.06);
-
-    --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+    --bg:#EEF1F6; --surface:#FFFFFF; --surface-2:#F4F6FA; --border:#D8DEE7;
+    --text:#141922; --text-dim:#5C6675;
+    --accent-teal:#0E7F73; --accent-teal-soft:rgba(14,127,115,.12);
+    --accent-amber:#A9700A; --accent-amber-soft:rgba(169,112,10,.14);
+    --accent-coral:#BE3A32; --accent-coral-soft:rgba(190,58,50,.12);
+    --accent-violet:#6A4BB5; --accent-violet-soft:rgba(106,75,181,.12);
+    --shadow:0 1px 2px rgba(20,25,34,.06), 0 8px 24px rgba(20,25,34,.06);
+    --font-display:'Space Grotesk','Segoe UI',system-ui,sans-serif;
+    --font-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
   }
-
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --bg: #10141B;
-      --surface: #171D27;
-      --surface-2: #1D2430;
-      --border: #2B333F;
-      --text: #E7EAEF;
-      --text-dim: #8B93A3;
-      --accent-teal: #4FD1C5;
-      --accent-teal-soft: rgba(79,209,197,.14);
-      --accent-amber: #F2B84B;
-      --accent-amber-soft: rgba(242,184,75,.14);
-      --accent-coral: #F2685D;
-      --accent-coral-soft: rgba(242,104,93,.16);
-      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+      --bg:#10141B; --surface:#171D27; --surface-2:#1D2430; --border:#2B333F;
+      --text:#E7EAEF; --text-dim:#8B93A3;
+      --accent-teal:#4FD1C5; --accent-teal-soft:rgba(79,209,197,.14);
+      --accent-amber:#F2B84B; --accent-amber-soft:rgba(242,184,75,.14);
+      --accent-coral:#F2685D; --accent-coral-soft:rgba(242,104,93,.16);
+      --accent-violet:#A78BFA; --accent-violet-soft:rgba(167,139,250,.16);
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
     }
   }
   :root[data-theme="dark"]{
-    --bg: #10141B;
-    --surface: #171D27;
-    --surface-2: #1D2430;
-    --border: #2B333F;
-    --text: #E7EAEF;
-    --text-dim: #8B93A3;
-    --accent-teal: #4FD1C5;
-    --accent-teal-soft: rgba(79,209,197,.14);
-    --accent-amber: #F2B84B;
-    --accent-amber-soft: rgba(242,184,75,.14);
-    --accent-coral: #F2685D;
-    --accent-coral-soft: rgba(242,104,93,.16);
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    --bg:#10141B; --surface:#171D27; --surface-2:#1D2430; --border:#2B333F;
+    --text:#E7EAEF; --text-dim:#8B93A3;
+    --accent-teal:#4FD1C5; --accent-teal-soft:rgba(79,209,197,.14);
+    --accent-amber:#F2B84B; --accent-amber-soft:rgba(242,184,75,.14);
+    --accent-coral:#F2685D; --accent-coral-soft:rgba(242,104,93,.16);
+    --accent-violet:#A78BFA; --accent-violet-soft:rgba(167,139,250,.16);
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
   }
 
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
-  body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:var(--font-display);
-    -webkit-font-smoothing:antialiased;
-    line-height:1.5;
-  }
+  body{background:var(--bg);color:var(--text);font-family:var(--font-display);
+       -webkit-font-smoothing:antialiased;line-height:1.5;}
+  .app{max-width:1080px;margin:0 auto;padding:30px 20px 72px;}
 
-  .app{
-    max-width:920px;
-    margin:0 auto;
-    padding:32px 20px 64px;
-  }
+  /* hero */
+  .hero{display:flex;gap:16px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;}
+  .hero h1{font-size:clamp(26px,4.2vw,38px);font-weight:700;letter-spacing:-.02em;margin:6px 0 10px;}
+  .hero .subject{font-size:14px;color:var(--text-dim);margin:0;}
+  .hero .lede{max-width:64ch;color:var(--text-dim);font-size:16px;margin:0;}
+  #btnTheme{background:transparent;border:1px solid var(--border);color:var(--text-dim);
+            font-size:12.5px;padding:7px 11px;border-radius:8px;flex-grow:0;}
 
-  /* ---------- Hero ---------- */
-  .hero h1{
-    font-size:clamp(26px,4.2vw,38px);
-    font-weight:700;
-    letter-spacing:-0.02em;
-    margin:6px 0 10px;
-  }
-  .hero .subject{
-    font-size:14px;
-    color:var(--text-dim);
-    margin:0;
-  }
-  .hero .lede{
-    max-width:62ch;
-    color:var(--text-dim);
-    font-size:16px;
-    margin:0 0 4px;
-  }
+  /* mode tabs */
+  .modes{display:flex;gap:6px;flex-wrap:wrap;margin-top:24px;}
+  .mode{font-size:13px;font-weight:600;padding:9px 13px;border-radius:9px;cursor:pointer;
+        border:1px solid var(--border);background:var(--surface);color:var(--text-dim);
+        transition:background .2s ease,color .2s ease,border-color .2s ease;}
+  .mode:hover{color:var(--text);}
+  .mode[aria-selected="true"]{background:var(--text);color:var(--bg);border-color:var(--text);}
+  .mode-note{margin:10px 2px 0;font-size:13px;color:var(--text-dim);max-width:72ch;}
 
-  /* ---------- Platform / stage ---------- */
-  .platform{
-    margin-top:28px;
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:14px;
-    box-shadow:var(--shadow);
-    padding:22px 20px 18px;
-  }
-  .platform-head{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:22px;
-  }
-  .platform-head h2{
-    font-size:15px;
-    margin:0;
-    color:var(--text-dim);
-    font-weight:600;
-  }
-  .badges{display:flex;gap:8px;flex-wrap:wrap;}
-  .badge{
-    font-family:var(--font-mono);
-    font-size:12.5px;
-    padding:6px 10px;
-    border-radius:8px;
-    border:1px solid var(--border);
-    background:var(--surface-2);
-    color:var(--text-dim);
-    transition:background .25s ease, color .25s ease, border-color .25s ease, transform .2s ease;
-  }
+  /* stage */
+  .platform{margin-top:16px;background:var(--surface);border:1px solid var(--border);
+            border-radius:14px;box-shadow:var(--shadow);padding:20px 18px 16px;}
+  .platform-head{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;
+                 align-items:center;margin-bottom:18px;}
+  .platform-head h2{font-size:14px;margin:0;color:var(--text-dim);font-weight:600;font-family:var(--font-mono);}
+  .badges{display:flex;gap:7px;flex-wrap:wrap;}
+  .badge{font-family:var(--font-mono);font-size:12px;padding:5px 9px;border-radius:8px;
+         border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim);
+         transition:background .25s ease,color .25s ease,border-color .25s ease,transform .2s ease;}
   .badge.b-true{border-color:transparent;background:var(--accent-coral-soft);color:var(--accent-coral);}
   .badge.b-false{border-color:transparent;background:var(--accent-teal-soft);color:var(--accent-teal);}
   .badge.flash{animation:badgePulse .5s ease;}
-  @keyframes badgePulse{0%{transform:scale(1);}40%{transform:scale(1.08);}100%{transform:scale(1);}}
+  @keyframes badgePulse{0%{transform:scale(1);}40%{transform:scale(1.09);}100%{transform:scale(1);}}
 
-  .track-wrap{
-    position:relative;
-    padding:6px 4px 46px;
-    overflow-x:auto;
-  }
-  .track{
-    display:flex;
-    gap:12px;
-    position:relative;
-    width:max-content;
-    min-width:100%;
-    justify-content:center;
-    padding:4px 4px 0;
-  }
-  .slot{
-    position:relative;
-    width:76px;
-    height:76px;
-    border-radius:12px;
-    border:1.5px dashed var(--border);
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:4px;
-    color:var(--text-dim);
-    background:var(--surface-2);
-    transition:border-color .25s ease, background .25s ease, box-shadow .25s ease;
-  }
-  .slot .idx{
-    position:absolute;
-    top:5px;
-    left:7px;
-    font-family:var(--font-mono);
-    font-size:10px;
-    color:var(--text-dim);
-    opacity:.7;
-  }
-  .slot .val{
-    font-family:var(--font-mono);
-    font-size:19px;
-    font-weight:700;
-    color:var(--text);
-    opacity:0;
-    transform:scale(.5);
-  }
-  .slot.filled{
-    border-style:solid;
-    border-color:var(--accent-teal);
-    background:var(--accent-teal-soft);
-  }
-  .slot.filled .val{opacity:1;transform:scale(1);}
-  .slot.entering .val{animation:popIn .38s cubic-bezier(.34,1.56,.64,1) forwards;}
-  .slot.leaving{animation:leaveOut .38s ease forwards;}
-  .slot.highlight{
-    box-shadow:0 0 0 3px var(--accent-amber);
-    border-color:var(--accent-amber);
-  }
-  .slot.cursor{
-    box-shadow:0 0 0 3px var(--accent-teal);
-    transform:translateY(-4px);
-  }
+  .stage{min-height:200px;display:flex;align-items:center;justify-content:center;
+         padding:8px 2px 4px;overflow-x:auto;}
+
+  /* linear track */
+  .track{display:flex;gap:12px;width:max-content;min-width:100%;justify-content:center;padding:26px 4px 34px;}
+  .slot{position:relative;width:74px;height:74px;border-radius:12px;border:1.5px dashed var(--border);
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        color:var(--text-dim);background:var(--surface-2);
+        transition:border-color .25s ease,background .25s ease,box-shadow .25s ease,transform .25s ease;}
+  .slot .idx{position:absolute;top:5px;left:7px;font-family:var(--font-mono);font-size:10px;
+             color:var(--text-dim);opacity:.7;}
+  .slot .val{font-family:var(--font-mono);font-size:19px;font-weight:700;color:var(--text);}
+  .slot .pri{font-family:var(--font-mono);font-size:9.5px;color:var(--accent-violet);
+             background:var(--accent-violet-soft);border-radius:5px;padding:1px 5px;margin-top:3px;}
+  .slot.filled{border-style:solid;border-color:var(--accent-teal);background:var(--accent-teal-soft);}
+  .slot.entering{animation:popIn .38s cubic-bezier(.34,1.56,.64,1);}
+  .slot.leaving{animation:leaveOut .38s ease;}
+  .slot.highlight{box-shadow:0 0 0 3px var(--accent-amber);border-color:var(--accent-amber);}
+  .slot.cursor{box-shadow:0 0 0 3px var(--accent-teal);transform:translateY(-5px);}
   .slot.shake{animation:shake .4s ease;}
+  .slot .tag{position:absolute;font-family:var(--font-mono);font-size:9.5px;font-weight:700;
+             padding:2px 6px;border-radius:5px;white-space:nowrap;}
+  .slot .tag.t-front{top:-22px;background:var(--accent-amber-soft);color:var(--accent-amber);}
+  .slot .tag.t-rear{bottom:-22px;background:var(--accent-teal-soft);color:var(--accent-teal);}
 
-  @keyframes popIn{
-    from{opacity:0;transform:scale(.4) translateY(10px);}
-    to{opacity:1;transform:scale(1) translateY(0);}
-  }
-  @keyframes leaveOut{
-    0%{opacity:1;transform:scale(1) translateY(0);}
-    100%{opacity:0;transform:scale(.4) translateY(12px);}
-  }
-  @keyframes shake{
-    0%,100%{transform:translateX(0);}
-    20%{transform:translateX(-6px);}
-    40%{transform:translateX(6px);}
-    60%{transform:translateX(-4px);}
-    80%{transform:translateX(4px);}
-  }
+  /* circular ring */
+  .ring{position:relative;width:min(340px,82vw);aspect-ratio:1;margin:18px auto;}
+  .ring .slot{position:absolute;left:50%;top:50%;width:66px;height:66px;transform:translate(-50%,-50%);}
+  .ring .slot.cursor{transform:translate(-50%,-50%) scale(1.1);}
+  .ring .slot.shake{animation:shakeRing .4s ease;}
+  .ring .slot.entering{animation:popInRing .38s cubic-bezier(.34,1.56,.64,1);}
+  .ring .slot.leaving{animation:leaveOutRing .38s ease;}
+  @keyframes popInRing{from{opacity:0;transform:translate(-50%,-50%) scale(.4);}to{opacity:1;transform:translate(-50%,-50%) scale(1);}}
+  @keyframes leaveOutRing{0%{opacity:1;transform:translate(-50%,-50%) scale(1);}100%{opacity:0;transform:translate(-50%,-50%) scale(.4);}}
+  @keyframes shakeRing{0%,100%{transform:translate(-50%,-50%);}25%{transform:translate(calc(-50% - 6px),-50%);}
+    50%{transform:translate(calc(-50% + 6px),-50%);}75%{transform:translate(calc(-50% - 4px),-50%);}}
+  .ring .slot .tag.t-front{top:-20px;}
+  .ring .slot .tag.t-rear{bottom:-20px;}
+  .ring-core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;
+             font-family:var(--font-mono);font-size:11.5px;color:var(--text-dim);line-height:1.8;}
+  .ring-core b{color:var(--text);font-size:13px;}
+  .ring-arrow{position:absolute;inset:0;pointer-events:none;}
 
-  .pointer-layer{
-    position:absolute;
-    left:0; right:0; bottom:2px;
-    height:34px;
-    pointer-events:none;
-  }
-  .pointer-tag{
-    position:absolute;
-    top:0;
-    transform:translateX(-50%);
-    font-family:var(--font-mono);
-    font-size:10.5px;
-    font-weight:700;
-    letter-spacing:.03em;
-    padding:3px 7px;
-    border-radius:6px;
-    white-space:nowrap;
-    opacity:0;
-    transition:left .38s cubic-bezier(.65,0,.35,1), opacity .25s ease;
-  }
-  .pointer-tag::before{
-    content:"";
-    position:absolute;
-    top:-5px; left:50%;
-    width:0;height:0;
-    transform:translateX(-50%);
-    border-left:4px solid transparent;
-    border-right:4px solid transparent;
-  }
-  .pointer-tag.front{background:var(--accent-amber-soft);color:var(--accent-amber);}
-  .pointer-tag.front::before{border-bottom:5px solid var(--accent-amber);}
-  .pointer-tag.rear{background:var(--accent-teal-soft);color:var(--accent-teal);top:20px;}
-  .pointer-tag.rear::before{border-bottom:5px solid var(--accent-teal);}
-  .pointer-tag.show{opacity:1;}
+  /* linked list */
+  .chain{display:flex;align-items:center;gap:0;width:max-content;min-width:100%;
+         justify-content:center;padding:26px 4px 30px;}
+  .lnode{position:relative;display:flex;border:1.5px solid var(--accent-teal);border-radius:10px;
+         overflow:hidden;background:var(--accent-teal-soft);}
+  .lnode .data{padding:14px 14px;font-family:var(--font-mono);font-size:18px;font-weight:700;min-width:54px;text-align:center;}
+  .lnode .next{padding:14px 9px;font-family:var(--font-mono);font-size:10px;color:var(--text-dim);
+               border-left:1.5px solid var(--accent-teal);display:flex;align-items:center;}
+  .lnode.entering{animation:popIn .38s cubic-bezier(.34,1.56,.64,1);}
+  .lnode.leaving{animation:leaveOut .38s ease;}
+  .lnode.highlight{box-shadow:0 0 0 3px var(--accent-amber);}
+  .lnode.cursor{box-shadow:0 0 0 3px var(--accent-teal);}
+  .lnode .tag{position:absolute;left:50%;transform:translateX(-50%);font-family:var(--font-mono);
+              font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:5px;white-space:nowrap;}
+  .lnode .tag.t-front{top:-22px;background:var(--accent-amber-soft);color:var(--accent-amber);}
+  .lnode .tag.t-rear{bottom:-22px;background:var(--accent-teal-soft);color:var(--accent-teal);}
+  .link{font-family:var(--font-mono);color:var(--text-dim);padding:0 8px;font-size:15px;}
+  .nullcap{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);
+           border:1.5px dashed var(--border);border-radius:8px;padding:12px 10px;}
+  .empty-note{font-family:var(--font-mono);font-size:13px;color:var(--text-dim);padding:40px 0;}
 
-  .callout{
-    min-height:20px;
-    text-align:center;
-    font-family:var(--font-mono);
-    font-size:13px;
-    color:var(--accent-amber);
-    font-weight:700;
-    opacity:0;
-    transform:translateY(-4px);
-    transition:opacity .25s ease, transform .25s ease;
-  }
-  .callout.show{opacity:1;transform:translateY(0);}
+  @keyframes popIn{from{opacity:0;transform:scale(.4) translateY(10px);}to{opacity:1;transform:none;}}
+  @keyframes leaveOut{0%{opacity:1;}100%{opacity:0;transform:scale(.4) translateY(12px);}}
+  @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}
+    40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
 
-  /* ---------- Controls ---------- */
-  .controls{
-    margin-top:22px;
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:12px;
-  }
-  @media (max-width:720px){ .controls{grid-template-columns:repeat(2,1fr);} }
-  @media (max-width:480px){ .controls{grid-template-columns:1fr;} }
+  .callout{min-height:20px;text-align:center;font-family:var(--font-mono);font-size:13px;
+           color:var(--accent-amber);font-weight:700;opacity:0;transform:translateY(-4px);
+           transition:opacity .25s ease,transform .25s ease;}
+  .callout.show{opacity:1;transform:none;}
 
-  .control{
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:14px 14px 16px;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-  }
-  .control h3{
-    margin:0;
-    font-size:14.5px;
-    font-weight:700;
-  }
-  .control p{
-    margin:0;
-    font-size:12.5px;
-    color:var(--text-dim);
-    flex-grow:1;
-  }
+  /* controls */
+  .settings{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+            background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
+  .field{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-dim);}
+  select,.control input{font-family:var(--font-mono);font-size:13px;padding:7px 9px;border-radius:8px;
+         border:1px solid var(--border);background:var(--surface-2);color:var(--text);}
+  select:focus-visible,.control input:focus{outline:2px solid var(--accent-teal);outline-offset:1px;}
+
+  .controls{margin-top:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  @media (max-width:760px){.controls{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:480px){.controls{grid-template-columns:1fr;}}
+  .control{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+           padding:13px 13px 15px;display:flex;flex-direction:column;gap:8px;}
+  .control.hidden{display:none;}
+  .control h3{margin:0;font-size:14px;font-weight:700;}
+  .control p{margin:0;font-size:12.5px;color:var(--text-dim);flex-grow:1;}
   .control-row{display:flex;gap:6px;}
-  .control input{
-    width:64px;
-    font-family:var(--font-mono);
-    font-size:13px;
-    padding:8px 9px;
-    border-radius:8px;
-    border:1px solid var(--border);
-    background:var(--surface-2);
-    color:var(--text);
-  }
-  .control input:focus{outline:2px solid var(--accent-teal);outline-offset:1px;}
+  .control input{width:100%;min-width:0;}
 
-  button{
-    font-family:var(--font-display);
-    font-size:13px;
-    font-weight:600;
-    border:none;
-    border-radius:8px;
-    padding:9px 12px;
-    cursor:pointer;
-    background:var(--text);
-    color:var(--bg);
-    transition:transform .15s ease, opacity .15s ease;
-    flex-grow:1;
-  }
+  button{font-family:var(--font-display);font-size:13px;font-weight:600;border:none;border-radius:8px;
+         padding:9px 12px;cursor:pointer;background:var(--text);color:var(--bg);
+         transition:transform .15s ease,opacity .15s ease;flex-grow:1;}
   button:hover{transform:translateY(-1px);}
   button:active{transform:translateY(0);}
   button:disabled{opacity:.4;cursor:not-allowed;transform:none;}
   button:focus-visible{outline:2px solid var(--accent-teal);outline-offset:2px;}
-  #btnReset{
-    background:transparent;
-    color:var(--text-dim);
-    border:1px solid var(--border);
-    flex-grow:0;
-    padding:7px 12px;
-    font-size:12.5px;
-  }
+  button.ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border);}
 
-  /* ---------- Log ---------- */
-  .log-panel{
-    margin-top:22px;
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:12px;
-    box-shadow:var(--shadow);
-    overflow:hidden;
-  }
-  .log-head{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:12px 14px;
-    border-bottom:1px solid var(--border);
-  }
-  .log-head h3{margin:0;font-size:14px;}
-  .log{
-    height:190px;
-    overflow-y:auto;
-    padding:10px 14px;
-    font-family:var(--font-mono);
-    font-size:12.5px;
-  }
-  .log-line{
-    padding:5px 0;
-    border-bottom:1px dashed var(--border);
-    color:var(--text-dim);
-  }
+  /* panels */
+  .panels{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:760px){.panels{grid-template-columns:1fr;}}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+         box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;
+              padding:11px 14px;border-bottom:1px solid var(--border);}
+  .panel-head h3{margin:0;font-size:13.5px;}
+  .panel-head span{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);}
+  .code{height:240px;overflow-y:auto;padding:10px 0;font-family:var(--font-mono);font-size:12.5px;}
+  .code-line{padding:2px 14px 2px 40px;position:relative;color:var(--text-dim);white-space:pre-wrap;
+             border-left:2px solid transparent;transition:background .15s ease,color .15s ease;}
+  .code-line::before{content:attr(data-n);position:absolute;left:12px;opacity:.45;font-size:11px;}
+  .code-line.active{background:var(--accent-amber-soft);color:var(--text);border-left-color:var(--accent-amber);}
+  .log{height:240px;overflow-y:auto;padding:10px 14px;font-family:var(--font-mono);font-size:12.5px;}
+  .log-line{padding:5px 0;border-bottom:1px dashed var(--border);color:var(--text-dim);}
   .log-line:last-child{border-bottom:none;}
   .log-line b{color:var(--text);}
   .log-line.success{color:var(--accent-teal);}
   .log-line.error{color:var(--accent-coral);}
   .log-line.step{color:var(--accent-amber);}
 
-  /* ---------- Notes ---------- */
-  .notes{
-    margin-top:22px;
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:16px 18px 18px;
-  }
-  .notes h3{margin:0 0 10px;font-size:14px;}
+  .notes{margin-top:18px;background:var(--surface);border:1px solid var(--border);
+         border-radius:12px;padding:15px 17px 17px;}
+  .notes h3{margin:0 0 4px;font-size:14px;}
+  .notes p{margin:0 0 10px;font-size:13px;color:var(--text-dim);max-width:72ch;}
   table{border-collapse:collapse;width:100%;font-size:13px;}
   td,th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);}
   th{color:var(--text-dim);font-weight:600;font-size:12px;}
-  td:first-child, th:first-child{font-family:var(--font-mono);}
+  td:first-child,th:first-child{font-family:var(--font-mono);}
   td:last-child{color:var(--text-dim);}
+  .stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-family:var(--font-mono);
+         font-size:12px;color:var(--text-dim);}
+  .stats b{color:var(--text);}
 
-  @media (prefers-reduced-motion:reduce){
-    *{animation-duration:.001s !important; transition-duration:.001s !important;}
-  }
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.001s !important;transition-duration:.001s !important;}}
 </style>
 </head>
 <body>
 <div class="app">
 
-  <div class="hero">
-    <p class="subject">Data structures, in motion</p>
-    <h1>Watch a queue work, one move at a time</h1>
-    <p class="lede">A queue is a line: whoever arrives first leaves first. This is called <b>FIFO</b> — First In, First Out. Run each operation below and watch exactly what happens to the underlying array and its two pointers, <code>front</code> and <code>rear</code>.</p>
-  </div>
+  <header class="hero">
+    <div>
+      <p class="subject">Data structures, in motion</p>
+      <h1>Watch a queue work, one move at a time</h1>
+      <p class="lede">A queue is a line: whoever arrives first leaves first. Pick an implementation below, run an operation, and watch the memory, the pointers and the source code move together.</p>
+    </div>
+    <button id="btnTheme" class="ghost">Switch theme</button>
+  </header>
 
-  <div class="platform">
+  <div class="modes" role="tablist" aria-label="Queue implementation">
+    <button class="mode" role="tab" data-mode="linear" aria-selected="true">Linear queue</button>
+    <button class="mode" role="tab" data-mode="circular" aria-selected="false">Circular queue</button>
+    <button class="mode" role="tab" data-mode="deque" aria-selected="false">Deque</button>
+    <button class="mode" role="tab" data-mode="priority" aria-selected="false">Priority queue</button>
+    <button class="mode" role="tab" data-mode="linked" aria-selected="false">Linked-list queue</button>
+  </div>
+  <p class="mode-note" id="modeNote"></p>
+
+  <main class="platform">
     <div class="platform-head">
-      <h2>Array-backed queue · capacity 6</h2>
+      <h2 id="stageTitle">array-backed queue</h2>
       <div class="badges">
         <div class="badge" id="badgeEmpty">isEmpty: —</div>
         <div class="badge" id="badgeFull">isFull: —</div>
-        <div class="badge" id="badgeSize">size: 0 / 6</div>
+        <div class="badge" id="badgeSize">size: 0</div>
+        <div class="badge" id="badgePtr">front=-1 rear=-1</div>
       </div>
     </div>
-
-    <div class="track-wrap">
-      <div class="track" id="track"></div>
-      <div class="pointer-layer" id="pointerLayer">
-        <div class="pointer-tag front" id="ptrFront">front</div>
-        <div class="pointer-tag rear" id="ptrRear">rear</div>
-      </div>
-    </div>
-
+    <div class="stage" id="stage"></div>
     <div class="callout" id="callout"></div>
+  </main>
+
+  <div class="settings">
+    <div class="field"><label for="capSel">Capacity</label>
+      <select id="capSel">
+        <option>4</option><option>5</option><option selected>6</option>
+        <option>7</option><option>8</option><option>9</option><option>10</option>
+      </select></div>
+    <div class="field"><label for="speedSel">Speed</label>
+      <select id="speedSel">
+        <option value="0.5">slow</option>
+        <option value="1" selected>normal</option>
+        <option value="2">fast</option>
+        <option value="6">instant</option>
+      </select></div>
+    <div class="field" id="fieldReset"><input type="checkbox" id="resetEmptyChk" checked style="width:auto;accent-color:var(--accent-teal);">
+      <label for="resetEmptyChk">Reset front/rear to -1 when the queue empties</label></div>
+    <div class="field" style="margin-left:auto;gap:6px;">
+      <button id="btnFill" class="ghost">Fill with samples</button>
+      <button id="btnDemo" class="ghost">Run demo</button>
+      <button id="btnReset" class="ghost">Reset</button>
+    </div>
   </div>
 
   <div class="controls">
-    <div class="control">
-      <h3>Enqueue</h3>
-      <p>Add a new rider to the back of the line.</p>
+    <div class="control" id="cEnqueue">
+      <h3 id="hEnqueue">Enqueue</h3>
+      <p id="pEnqueue">Add a value to the back of the line.</p>
       <div class="control-row">
-        <input id="enqueueInput" type="text" maxlength="4" placeholder="value" inputmode="numeric">
-        <button id="btnEnqueue">Add to back</button>
+        <input id="valInput" type="text" maxlength="4" placeholder="value" autocomplete="off">
+        <input id="priInput" type="number" min="1" max="9" placeholder="pri" style="width:70px;display:none;">
       </div>
+      <button id="btnEnqueue">Add to back</button>
     </div>
 
-    <div class="control">
+    <div class="control" id="cDequeue">
       <h3>Dequeue</h3>
-      <p>Remove whoever has been waiting the longest.</p>
+      <p>Remove whoever has been waiting longest.</p>
       <button id="btnDequeue">Remove from front</button>
     </div>
 
+    <div class="control hidden" id="cAddFront">
+      <h3>Add to front</h3>
+      <p>Deque only: push a value in at the head of the line.</p>
+      <button id="btnAddFront">Insert at front</button>
+    </div>
+
+    <div class="control hidden" id="cRemoveRear">
+      <h3>Remove from rear</h3>
+      <p>Deque only: pull the most recent arrival back out.</p>
+      <button id="btnRemoveRear">Remove from rear</button>
+    </div>
+
     <div class="control">
-      <h3>Peek / Front</h3>
-      <p>Look at who's next without removing them.</p>
-      <button id="btnPeek">Show front</button>
+      <h3>Peek</h3>
+      <p>Look at the ends without removing anything.</p>
+      <div class="control-row">
+        <button id="btnPeek">Front</button>
+        <button id="btnPeekRear">Rear</button>
+      </div>
     </div>
 
     <div class="control">
       <h3>Traversal</h3>
-      <p>Walk the whole line, from front to back.</p>
+      <p>Walk the whole line, front to back.</p>
       <button id="btnTraverse">Walk the line</button>
     </div>
 
     <div class="control">
-      <h3>isEmpty()</h3>
-      <p>Is anyone in line right now?</p>
-      <button id="btnIsEmpty">Check empty</button>
+      <h3>Search</h3>
+      <p>Find a value and report its position from the front.</p>
+      <div class="control-row">
+        <input id="searchInput" type="text" maxlength="4" placeholder="value" autocomplete="off">
+        <button id="btnSearch">Search</button>
+      </div>
     </div>
 
     <div class="control">
-      <h3>isFull()</h3>
-      <p>Has the line run out of room?</p>
-      <button id="btnIsFull">Check full</button>
+      <h3>State checks</h3>
+      <p>The three questions every queue answers in O(1).</p>
+      <div class="control-row">
+        <button id="btnIsEmpty">isEmpty</button>
+        <button id="btnIsFull">isFull</button>
+        <button id="btnSize">size</button>
+      </div>
     </div>
   </div>
 
-  <div class="log-panel">
-    <div class="log-head">
-      <h3>Step log</h3>
-      <button id="btnReset">Reset</button>
-    </div>
-    <div class="log" id="log"></div>
+  <div class="panels">
+    <section class="panel">
+      <div class="panel-head"><h3>Source</h3><span id="codeLabel">idle</span></div>
+      <div class="code" id="code"></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h3>Step log</h3><button id="btnClearLog" class="ghost" style="flex-grow:0;padding:5px 10px;font-size:12px;">Clear</button></div>
+      <div class="log" id="log"></div>
+    </section>
   </div>
 
-  <div class="notes">
-    <h3>Good to know</h3>
-    <table>
-      <tr><th>Operation</th><th>Time</th><th>What it does</th></tr>
-      <tr><td>enqueue(x)</td><td>O(1)</td><td>Places x at index rear+1, then moves rear forward.</td></tr>
-      <tr><td>dequeue()</td><td>O(1)</td><td>Reads the value at front, then moves front forward.</td></tr>
-      <tr><td>peek()</td><td>O(1)</td><td>Reads the value at front without moving anything.</td></tr>
-      <tr><td>traversal</td><td>O(n)</td><td>Visits every slot from front to rear, in order.</td></tr>
-      <tr><td>isEmpty()</td><td>O(1)</td><td>True when front &gt; rear (no active slots).</td></tr>
-      <tr><td>isFull()</td><td>O(1)</td><td>True when rear has reached the last index (capacity − 1).</td></tr>
-    </table>
-  </div>
+  <section class="notes">
+    <h3 id="notesTitle">Good to know</h3>
+    <p id="notesIntro"></p>
+    <table id="notesTable"></table>
+    <div class="stats">
+      <span>enqueued <b id="stEnq">0</b></span>
+      <span>dequeued <b id="stDeq">0</b></span>
+      <span>overflow rejects <b id="stOver">0</b></span>
+      <span>underflow rejects <b id="stUnder">0</b></span>
+      <span>ops <b id="stOps">0</b></span>
+    </div>
+  </section>
 
 </div>
 
 <script>
 (function(){
-  const CAPACITY = 6;
-  const state = {
-    arr: new Array(CAPACITY).fill(null),
-    front: -1,
-    rear: -1,
-    busy: false,
-    counter: 1
+  'use strict';
+
+  /* ---------------- state ---------------- */
+  const S = {
+    mode:'linear', cap:6, speed:1, busy:false, counter:1, resetOnEmpty:true,
+    arr:[], front:-1, rear:-1, count:0,
+    nodes:[],
+    stats:{enq:0,deq:0,over:0,under:0,ops:0}
   };
 
-  const track = document.getElementById('track');
-  const ptrFront = document.getElementById('ptrFront');
-  const ptrRear = document.getElementById('ptrRear');
-  const callout = document.getElementById('callout');
-  const logEl = document.getElementById('log');
-  const badgeEmpty = document.getElementById('badgeEmpty');
-  const badgeFull = document.getElementById('badgeFull');
-  const badgeSize = document.getElementById('badgeSize');
+  const $ = id => document.getElementById(id);
+  const stage=$('stage'), callout=$('callout'), logEl=$('log'), codeEl=$('code'),
+        codeLabel=$('codeLabel'), badgeEmpty=$('badgeEmpty'), badgeFull=$('badgeFull'),
+        badgeSize=$('badgeSize'), badgePtr=$('badgePtr'), stageTitle=$('stageTitle'),
+        modeNote=$('modeNote'), valInput=$('valInput'), priInput=$('priInput'),
+        searchInput=$('searchInput');
 
-  const buttons = {
-    enqueue: document.getElementById('btnEnqueue'),
-    dequeue: document.getElementById('btnDequeue'),
-    peek: document.getElementById('btnPeek'),
-    traverse: document.getElementById('btnTraverse'),
-    isEmpty: document.getElementById('btnIsEmpty'),
-    isFull: document.getElementById('btnIsFull'),
-    reset: document.getElementById('btnReset')
+  const BTN = {
+    enqueue:$('btnEnqueue'), dequeue:$('btnDequeue'), addFront:$('btnAddFront'),
+    removeRear:$('btnRemoveRear'), peek:$('btnPeek'), peekRear:$('btnPeekRear'),
+    traverse:$('btnTraverse'), search:$('btnSearch'), isEmpty:$('btnIsEmpty'),
+    isFull:$('btnIsFull'), size:$('btnSize'), fill:$('btnFill'), demo:$('btnDemo'),
+    reset:$('btnReset')
   };
-  const enqueueInput = document.getElementById('enqueueInput');
 
-  // ---- build slots ----
-  const slotEls = [];
-  for(let i=0;i<CAPACITY;i++){
-    const s = document.createElement('div');
-    s.className = 'slot';
-    s.innerHTML = '<span class="idx">'+i+'</span><span class="val"></span>';
-    track.appendChild(s);
-    slotEls.push(s);
+  const MODE_INFO = {
+    linear:{
+      title:'array-backed linear queue · capacity ',
+      note:'The textbook starting point. front and rear only ever move forward, so slots left behind by a dequeue are dead space — that wasted room is exactly the problem circular queues were invented to solve.',
+      intro:'Two indices walk one direction across a fixed array. Once rear hits the last index the queue reports full, even if earlier slots sit empty.'
+    },
+    circular:{
+      title:'circular queue (ring buffer) · capacity ',
+      note:'Same array, but the indices wrap with modulo arithmetic: after the last slot comes index 0 again. Nothing is wasted, and full is tracked by a counter rather than by rear\u2019s position.',
+      intro:'rear = (front + count \u2212 1) mod capacity. Every slot is reusable, so the queue is only full when count reaches capacity.'
+    },
+    deque:{
+      title:'double-ended queue · capacity ',
+      note:'A ring buffer that accepts and releases at both ends. Restrict it to one end and you have a queue; restrict it to the other and you have a stack.',
+      intro:'Four O(1) operations instead of two. front can move backwards (wrapping to the end of the array) and rear can move backwards too.'
+    },
+    priority:{
+      title:'priority queue (sorted array) · capacity ',
+      note:'Arrival order stops deciding who leaves first — priority 1 outranks priority 9, and ties fall back to who arrived earlier. Stored sorted, so removing is trivial and inserting does the work.',
+      intro:'This version keeps the array sorted on insert, which costs O(n) shifting. A binary heap trades that for O(log n) on both ends.'
+    },
+    linked:{
+      title:'linked-list queue · unbounded',
+      note:'No array, no capacity, no wraparound. Each node holds a value and a pointer to the next node; the queue keeps references to head and tail so both ends stay O(1).',
+      intro:'Memory is allocated per node, so the queue never overflows — it grows until the machine says no. The cost is a pointer per element and no index arithmetic.'
+    }
+  };
+
+  const OPS_TABLE = {
+    linear:[['enqueue(x)','O(1)','Writes x at rear+1, advances rear.'],
+            ['dequeue()','O(1)','Reads front, advances front. The slot is abandoned.'],
+            ['peek()','O(1)','Reads arr[front] without moving anything.'],
+            ['traverse()','O(n)','Visits front..rear in order.'],
+            ['isEmpty()','O(1)','True when front = -1 or front > rear.'],
+            ['isFull()','O(1)','True when rear = capacity - 1.']],
+    circular:[['enqueue(x)','O(1)','Writes at (front+count) mod cap, increments count.'],
+              ['dequeue()','O(1)','Reads front, front = (front+1) mod cap, decrements count.'],
+              ['peek()','O(1)','Reads arr[front].'],
+              ['traverse()','O(n)','Visits (front+k) mod cap for k = 0..count-1.'],
+              ['isEmpty()','O(1)','True when count = 0.'],
+              ['isFull()','O(1)','True when count = capacity.']],
+    deque:[['addRear(x)','O(1)','Writes at (front+count) mod cap.'],
+           ['addFront(x)','O(1)','front = (front-1+cap) mod cap, writes there.'],
+           ['removeFront()','O(1)','Reads front, advances front.'],
+           ['removeRear()','O(1)','Reads rear, decrements count.'],
+           ['peekFront/peekRear','O(1)','Reads either end.'],
+           ['isFull()','O(1)','True when count = capacity.']],
+    priority:[['enqueue(x,p)','O(n)','Shifts lower-priority items right, inserts x.'],
+              ['dequeue()','O(1)','Removes index 0 — always the highest priority.'],
+              ['peek()','O(1)','Reads index 0.'],
+              ['traverse()','O(n)','Visits index 0..count-1, priority order.'],
+              ['isEmpty()','O(1)','True when count = 0.'],
+              ['isFull()','O(1)','True when count = capacity.']],
+    linked:[['enqueue(x)','O(1)','Allocates a node, links tail.next to it, moves tail.'],
+            ['dequeue()','O(1)','Returns head.value, head = head.next, frees the node.'],
+            ['peek()','O(1)','Reads head.value.'],
+            ['traverse()','O(n)','Follows next pointers until null.'],
+            ['isEmpty()','O(1)','True when head = null.'],
+            ['isFull()','—','Never full; bounded only by available memory.']]
+  };
+
+  /* ---------------- pseudocode ---------------- */
+  const CODE = {
+    linear:{
+      enqueue:['enqueue(x):','  if rear == capacity - 1:','    return OVERFLOW','  if front == -1: front = 0','  rear = rear + 1','  arr[rear] = x'],
+      dequeue:['dequeue():','  if front == -1 or front > rear:','    return UNDERFLOW','  x = arr[front]','  arr[front] = null','  front = front + 1','  return x'],
+      peek:['peek():','  if isEmpty(): return UNDERFLOW','  return arr[front]'],
+      peekRear:['peekRear():','  if isEmpty(): return UNDERFLOW','  return arr[rear]'],
+      traverse:['traverse():','  i = front','  while i <= rear:','    visit arr[i]','    i = i + 1'],
+      search:['search(x):','  i = front','  while i <= rear:','    if arr[i] == x: return i','    i = i + 1','  return NOT_FOUND'],
+      isEmpty:['isEmpty():','  return front == -1 or front > rear'],
+      isFull:['isFull():','  return rear == capacity - 1'],
+      size:['size():','  if isEmpty(): return 0','  return rear - front + 1']
+    },
+    circular:{
+      enqueue:['enqueue(x):','  if count == capacity:','    return OVERFLOW','  if count == 0: front = 0','  rear = (front + count) mod capacity','  arr[rear] = x','  count = count + 1'],
+      dequeue:['dequeue():','  if count == 0:','    return UNDERFLOW','  x = arr[front]','  arr[front] = null','  front = (front + 1) mod capacity','  count = count - 1','  return x'],
+      peek:['peek():','  if count == 0: return UNDERFLOW','  return arr[front]'],
+      peekRear:['peekRear():','  if count == 0: return UNDERFLOW','  return arr[(front + count - 1) mod capacity]'],
+      traverse:['traverse():','  for k = 0 to count - 1:','    i = (front + k) mod capacity','    visit arr[i]'],
+      search:['search(x):','  for k = 0 to count - 1:','    i = (front + k) mod capacity','    if arr[i] == x: return k','  return NOT_FOUND'],
+      isEmpty:['isEmpty():','  return count == 0'],
+      isFull:['isFull():','  return count == capacity'],
+      size:['size():','  return count']
+    },
+    deque:{
+      enqueue:['addRear(x):','  if count == capacity:','    return OVERFLOW','  rear = (front + count) mod capacity','  arr[rear] = x','  count = count + 1'],
+      addFront:['addFront(x):','  if count == capacity:','    return OVERFLOW','  front = (front - 1 + capacity) mod capacity','  arr[front] = x','  count = count + 1'],
+      dequeue:['removeFront():','  if count == 0:','    return UNDERFLOW','  x = arr[front]','  front = (front + 1) mod capacity','  count = count - 1','  return x'],
+      removeRear:['removeRear():','  if count == 0:','    return UNDERFLOW','  rear = (front + count - 1) mod capacity','  x = arr[rear]','  count = count - 1','  return x'],
+      peek:['peekFront():','  if count == 0: return UNDERFLOW','  return arr[front]'],
+      peekRear:['peekRear():','  if count == 0: return UNDERFLOW','  return arr[(front + count - 1) mod capacity]'],
+      traverse:['traverse():','  for k = 0 to count - 1:','    i = (front + k) mod capacity','    visit arr[i]'],
+      search:['search(x):','  for k = 0 to count - 1:','    i = (front + k) mod capacity','    if arr[i] == x: return k','  return NOT_FOUND'],
+      isEmpty:['isEmpty():','  return count == 0'],
+      isFull:['isFull():','  return count == capacity'],
+      size:['size():','  return count']
+    },
+    priority:{
+      enqueue:['enqueue(x, p):','  if count == capacity:','    return OVERFLOW','  i = count - 1','  while i >= 0 and arr[i].pri > p:','    arr[i + 1] = arr[i]   // shift right','    i = i - 1','  arr[i + 1] = (x, p)','  count = count + 1'],
+      dequeue:['dequeue():','  if count == 0:','    return UNDERFLOW','  x = arr[0]','  shift arr[1..count-1] left by one','  count = count - 1','  return x'],
+      peek:['peek():','  if count == 0: return UNDERFLOW','  return arr[0]   // highest priority'],
+      peekRear:['peekLast():','  if count == 0: return UNDERFLOW','  return arr[count - 1]   // lowest priority'],
+      traverse:['traverse():','  for i = 0 to count - 1:','    visit arr[i]   // priority order'],
+      search:['search(x):','  for i = 0 to count - 1:','    if arr[i].value == x: return i','  return NOT_FOUND'],
+      isEmpty:['isEmpty():','  return count == 0'],
+      isFull:['isFull():','  return count == capacity'],
+      size:['size():','  return count']
+    },
+    linked:{
+      enqueue:['enqueue(x):','  node = new Node(x)','  node.next = null','  if tail == null:','    head = tail = node','  else:','    tail.next = node','    tail = node'],
+      dequeue:['dequeue():','  if head == null:','    return UNDERFLOW','  x = head.value','  head = head.next','  if head == null: tail = null','  free old node','  return x'],
+      peek:['peek():','  if head == null: return UNDERFLOW','  return head.value'],
+      peekRear:['peekRear():','  if tail == null: return UNDERFLOW','  return tail.value'],
+      traverse:['traverse():','  cur = head','  while cur != null:','    visit cur.value','    cur = cur.next'],
+      search:['search(x):','  cur = head; i = 0','  while cur != null:','    if cur.value == x: return i','    cur = cur.next; i = i + 1','  return NOT_FOUND'],
+      isEmpty:['isEmpty():','  return head == null'],
+      isFull:['isFull():','  return false   // grows on demand'],
+      size:['size():','  count nodes from head to null']
+    }
+  };
+
+  /* ---------------- helpers ---------------- */
+  const delay = ms => new Promise(r=>setTimeout(r, ms/S.speed));
+  const isArrayMode = () => S.mode !== 'linked';
+  const usesRing = () => S.mode === 'circular' || S.mode === 'deque';
+
+  function isEmpty(){
+    if(S.mode==='linked') return S.nodes.length===0;
+    if(S.mode==='linear') return S.front===-1 || S.front>S.rear;
+    return S.count===0;
+  }
+  function isFull(){
+    if(S.mode==='linked') return false;
+    if(S.mode==='linear') return S.rear===S.cap-1;
+    return S.count===S.cap;
+  }
+  function size(){
+    if(S.mode==='linked') return S.nodes.length;
+    if(S.mode==='linear') return isEmpty()?0:(S.rear-S.front+1);
+    return S.count;
+  }
+  function rearIndex(){
+    if(isEmpty()) return -1;
+    if(S.mode==='linear') return S.rear;
+    if(S.mode==='priority') return S.count-1;
+    return (S.front + S.count - 1) % S.cap;
+  }
+  function frontIndex(){
+    if(isEmpty()) return -1;
+    if(S.mode==='priority') return 0;
+    return S.front;
+  }
+  // logical order of occupied indices, front first
+  function order(){
+    if(isEmpty()) return [];
+    if(S.mode==='linked') return S.nodes.map((_,i)=>i);
+    if(S.mode==='linear'){ const o=[]; for(let i=S.front;i<=S.rear;i++) o.push(i); return o; }
+    if(S.mode==='priority'){ const o=[]; for(let i=0;i<S.count;i++) o.push(i); return o; }
+    const o=[]; for(let k=0;k<S.count;k++) o.push((S.front+k)%S.cap); return o;
   }
 
-  function delay(ms){ return new Promise(res=>setTimeout(res,ms)); }
-
   function setBusy(b){
-    state.busy = b;
-    Object.values(buttons).forEach(btn=> btn.disabled = b);
+    S.busy=b;
+    Object.values(BTN).forEach(x=>{ if(x) x.disabled=b; });
+    document.querySelectorAll('.mode').forEach(m=>m.disabled=b);
+    $('capSel').disabled = b || S.mode==='linked';
   }
 
   function log(html, kind){
-    const line = document.createElement('div');
-    line.className = 'log-line' + (kind ? (' '+kind) : '');
-    line.innerHTML = html;
+    const line=document.createElement('div');
+    line.className='log-line'+(kind?' '+kind:'');
+    line.innerHTML=html;
     logEl.appendChild(line);
-    logEl.scrollTop = logEl.scrollHeight;
-  }
-
-  function isEmpty(){ return state.front === -1 || state.front > state.rear; }
-  function isFull(){ return state.rear === CAPACITY - 1; }
-  function size(){ return isEmpty() ? 0 : (state.rear - state.front + 1); }
-
-  function positionPointers(){
-    if(isEmpty()){
-      ptrFront.classList.remove('show');
-      ptrRear.classList.remove('show');
-      return;
-    }
-    const fEl = slotEls[state.front];
-    const rEl = slotEls[state.rear];
-    ptrFront.style.left = (fEl.offsetLeft + fEl.offsetWidth/2) + 'px';
-    ptrRear.style.left = (rEl.offsetLeft + rEl.offsetWidth/2) + 'px';
-    ptrFront.classList.add('show');
-    ptrRear.classList.add('show');
-    if(state.front === state.rear){
-      ptrFront.textContent = 'front & rear';
-      ptrRear.style.opacity = 0;
-    } else {
-      ptrFront.textContent = 'front';
-      ptrRear.textContent = 'rear';
-      ptrRear.style.opacity = '';
-    }
-  }
-
-  function renderBadges(){
-    const e = isEmpty(), f = isFull();
-    badgeEmpty.textContent = 'isEmpty: ' + e;
-    badgeEmpty.className = 'badge ' + (e ? 'b-true' : 'b-false');
-    badgeFull.textContent = 'isFull: ' + f;
-    badgeFull.className = 'badge ' + (f ? 'b-true' : 'b-false');
-    badgeSize.textContent = 'size: ' + size() + ' / ' + CAPACITY;
-  }
-
-  function flash(el){
-    el.classList.remove('flash');
-    void el.offsetWidth;
-    el.classList.add('flash');
+    logEl.scrollTop=logEl.scrollHeight;
   }
 
   function showCallout(text){
-    callout.textContent = text;
+    callout.textContent=text;
     callout.classList.add('show');
     clearTimeout(showCallout._t);
-    showCallout._t = setTimeout(()=> callout.classList.remove('show'), 2200);
+    showCallout._t=setTimeout(()=>callout.classList.remove('show'), 2400);
+  }
+
+  function flash(el){ el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+
+  /* ---------------- code panel ---------------- */
+  let codeLines=[];
+  function showCode(op){
+    const src=(CODE[S.mode][op]) || CODE[S.mode].peek;
+    codeEl.innerHTML='';
+    codeLines=src.map((txt,i)=>{
+      const d=document.createElement('div');
+      d.className='code-line'; d.dataset.n=i+1; d.textContent=txt;
+      codeEl.appendChild(d); return d;
+    });
+    codeLabel.textContent=S.mode+'.'+op+'()';
+  }
+  async function mark(i, ms){
+    codeLines.forEach(l=>l.classList.remove('active'));
+    if(codeLines[i]) codeLines[i].classList.add('active');
+    await delay(ms===undefined?300:ms);
+  }
+  function clearMarks(){ codeLines.forEach(l=>l.classList.remove('active')); }
+
+  /* ---------------- rendering ---------------- */
+  let cellEls=[];
+
+  function cellHTML(i, item, isF, isR){
+    const tags=(isF&&isR)?'<span class="tag t-front">front &amp; rear</span>'
+      :(isF?'<span class="tag t-front">front</span>':'')+(isR?'<span class="tag t-rear">rear</span>':'');
+    const pri = (S.mode==='priority' && item) ? '<span class="pri">p'+item.p+'</span>' : '';
+    return '<span class="idx">'+i+'</span><span class="val">'+(item?item.v:'')+'</span>'+pri+tags;
   }
 
   function render(){
-    for(let i=0;i<CAPACITY;i++){
-      const s = slotEls[i];
-      const v = state.arr[i];
-      const valEl = s.querySelector('.val');
-      const active = !isEmpty() && i>=state.front && i<=state.rear;
-      s.classList.toggle('filled', active && v !== null);
-      valEl.textContent = (active && v !== null) ? v : '';
-      s.classList.remove('highlight','cursor');
+    const occupied=order();
+    const fi=frontIndex(), ri=rearIndex();
+    stage.innerHTML='';
+    cellEls=[];
+
+    if(S.mode==='linked'){
+      const chain=document.createElement('div');
+      chain.className='chain';
+      if(S.nodes.length===0){
+        chain.innerHTML='<span class="empty-note">head = null &nbsp;·&nbsp; tail = null &nbsp;·&nbsp; the list is empty</span>';
+      } else {
+        S.nodes.forEach((n,i)=>{
+          const node=document.createElement('div');
+          node.className='lnode';
+          const isF=i===0, isR=i===S.nodes.length-1;
+          const tags=(isF&&isR)?'<span class="tag t-front">head &amp; tail</span>'
+            :(isF?'<span class="tag t-front">head</span>':'')+(isR?'<span class="tag t-rear">tail</span>':'');
+          node.innerHTML='<span class="data">'+n.v+'</span><span class="next">next</span>'+tags;
+          chain.appendChild(node);
+          cellEls[i]=node;
+          const link=document.createElement('span');
+          link.className='link'; link.textContent='→';
+          chain.appendChild(link);
+        });
+        const cap=document.createElement('span');
+        cap.className='nullcap'; cap.textContent='null';
+        chain.appendChild(cap);
+      }
+      stage.appendChild(chain);
+    } else if(usesRing()){
+      const ring=document.createElement('div');
+      ring.className='ring';
+      for(let i=0;i<S.cap;i++){
+        const a=(i/S.cap)*2*Math.PI - Math.PI/2;
+        const s=document.createElement('div');
+        s.className='slot';
+        s.style.left=(50+Math.cos(a)*38)+'%';
+        s.style.top=(50+Math.sin(a)*38)+'%';
+        const active=occupied.indexOf(i)!==-1;
+        if(active) s.classList.add('filled');
+        s.innerHTML=cellHTML(i, active?S.arr[i]:null, i===fi, i===ri);
+        ring.appendChild(s);
+        cellEls[i]=s;
+      }
+      const core=document.createElement('div');
+      core.className='ring-core';
+      core.innerHTML='<b>'+size()+' / '+S.cap+'</b><br>front '+(isEmpty()?'—':S.front)+'<br>rear '+(ri<0?'—':ri);
+      ring.appendChild(core);
+      stage.appendChild(ring);
+    } else {
+      const track=document.createElement('div');
+      track.className='track';
+      for(let i=0;i<S.cap;i++){
+        const s=document.createElement('div');
+        s.className='slot';
+        const active=occupied.indexOf(i)!==-1;
+        if(active) s.classList.add('filled');
+        s.innerHTML=cellHTML(i, active?S.arr[i]:null, i===fi, i===ri);
+        track.appendChild(s);
+        cellEls[i]=s;
+      }
+      stage.appendChild(track);
     }
-    positionPointers();
     renderBadges();
   }
 
-  render();
-  log('Queue created. capacity = 6, front = -1, rear = -1. <b>Enqueue</b> to add the first rider.', 'step');
+  function renderBadges(){
+    const e=isEmpty(), f=isFull();
+    badgeEmpty.textContent='isEmpty: '+e;
+    badgeEmpty.className='badge '+(e?'b-true':'b-false');
+    badgeFull.textContent='isFull: '+(S.mode==='linked'?'false (dynamic)':f);
+    badgeFull.className='badge '+(f?'b-true':'b-false');
+    badgeSize.textContent='size: '+size()+(S.mode==='linked'?'':' / '+S.cap);
+    if(S.mode==='linked'){
+      badgePtr.textContent='head='+(S.nodes.length?S.nodes[0].v:'null')+' tail='+(S.nodes.length?S.nodes[S.nodes.length-1].v:'null');
+    } else {
+      badgePtr.textContent='front='+frontIndex()+' rear='+rearIndex()+(isArrayMode()&&S.mode!=='linear'?' count='+S.count:'');
+    }
+    $('stEnq').textContent=S.stats.enq;
+    $('stDeq').textContent=S.stats.deq;
+    $('stOver').textContent=S.stats.over;
+    $('stUnder').textContent=S.stats.under;
+    $('stOps').textContent=S.stats.ops;
+  }
 
-  // ---------- ENQUEUE ----------
+  function pulse(idx, cls, ms){
+    const el=cellEls[idx];
+    if(!el) return Promise.resolve();
+    el.classList.add(cls);
+    return delay(ms===undefined?420:ms).then(()=>el.classList.remove(cls));
+  }
+
+  /* ---------------- operations ---------------- */
+  function nextValue(){
+    let raw=valInput.value.trim();
+    if(raw==='') raw=String(S.counter++);
+    valInput.value='';
+    return raw;
+  }
+  function nextPriority(){
+    let p=parseInt(priInput.value,10);
+    if(isNaN(p)||p<1||p>9) p=Math.floor(Math.random()*5)+1;
+    priInput.value='';
+    return p;
+  }
+
+  async function overflow(label, val){
+    S.stats.over++; S.stats.ops++;
+    showCallout('Full — cannot '+label+' "'+val+'"');
+    log('<b>'+label+'('+val+')</b> rejected. Overflow: '+
+        (S.mode==='linear' ? 'rear = '+S.rear+' has reached capacity − 1 = '+(S.cap-1)+', so isFull() is true regardless of how many slots are actually occupied ('+size()+' of '+S.cap+').'+
+            (size()===0 ? ' The array is empty but rear never moves backwards — this is the linear queue\u2019s dead-space flaw. Hit Reset, turn on the reset-when-empty option, or try the circular queue.' : ' Dequeue does not help here; only the slots ahead of rear were ever usable.')
+                           : 'count = '+S.count+' equals capacity. Remove something first.'), 'error');
+    const ri=rearIndex();
+    if(ri>=0) await pulse(ri,'shake');
+    renderBadges();
+  }
+  async function underflow(label){
+    S.stats.under++; S.stats.ops++;
+    showCallout('Empty — nothing to '+label);
+    log('<b>'+label+'()</b> rejected. Underflow: the queue holds nothing.', 'error');
+    await delay(260);
+    renderBadges();
+  }
+
   async function doEnqueue(){
-    if(state.busy) return;
-    let raw = enqueueInput.value.trim();
-    if(raw === ''){ raw = String(state.counter++); }
-    enqueueInput.value = '';
-
-    if(isFull()){
-      setBusy(true);
-      const rEl = slotEls[state.rear];
-      rEl.classList.add('shake');
-      showCallout('Full — cannot enqueue "'+raw+'"');
-      log('<b>enqueue('+raw+')</b> rejected — isFull() is true (rear = '+state.rear+' has reached capacity − 1 = '+(CAPACITY-1)+'). Dequeue something first.', 'error');
-      await delay(420);
-      rEl.classList.remove('shake');
-      setBusy(false);
-      return;
-    }
-
+    if(S.busy) return;
+    const v=nextValue();
+    const p=(S.mode==='priority')?nextPriority():null;
     setBusy(true);
-    const oldRear = state.rear;
-    state.rear += 1;
-    if(state.front === -1) state.front = 0;
-    state.arr[state.rear] = raw;
+    showCode('enqueue');
+    await mark(0);
+    await mark(1);
+    if(isFull()){ await mark(2); await overflow(S.mode==='deque'?'addRear':'enqueue', v); clearMarks(); setBusy(false); return; }
 
-    render();
-    const newEl = slotEls[state.rear];
-    newEl.classList.add('entering');
-    await delay(420);
-    newEl.classList.remove('entering');
-
-    log('<b>enqueue('+raw+')</b> → placed at index '+state.rear+'. rear moved from '+oldRear+' to '+state.rear+'. size is now '+size()+'.', 'success');
-    setBusy(false);
+    if(S.mode==='linked'){
+      await mark(1); await mark(2);
+      S.nodes.push({v:v});
+      render();
+      const el=cellEls[S.nodes.length-1];
+      if(el) el.classList.add('entering');
+      await mark(S.nodes.length===1?4:6, 340);
+      await mark(S.nodes.length===1?4:7, 300);
+      log('<b>enqueue('+v+')</b> → new node allocated. '+
+          (S.nodes.length===1?'head and tail both point at it.':'old tail.next now points at it; tail moved forward.')+
+          ' size = '+size()+'.','success');
+    } else if(S.mode==='priority'){
+      let i=S.count-1;
+      await mark(3);
+      while(i>=0 && S.arr[i].p>p){ S.arr[i+1]=S.arr[i]; S.arr[i]=null; i--; await mark(5,220); render(); }
+      await mark(7);
+      S.arr[i+1]={v:v,p:p};
+      S.count++;
+      render();
+      if(cellEls[i+1]) cellEls[i+1].classList.add('entering');
+      await mark(8,300);
+      log('<b>enqueue('+v+', priority '+p+')</b> → inserted at index '+(i+1)+' after shifting '+(S.count-1-(i+1))+' item(s) right. Highest priority sits at index 0.','success');
+    } else {
+      let idx;
+      if(S.mode==='linear'){
+        await mark(3);
+        if(S.front===-1) S.front=0;
+        await mark(4);
+        S.rear+=1; idx=S.rear;
+        S.arr[idx]={v:v,p:null};
+        await mark(5);
+      } else {
+        await mark(3);
+        if(S.count===0) S.front=0;
+        idx=(S.front+S.count)%S.cap;
+        await mark(4);
+        S.arr[idx]={v:v,p:null};
+        await mark(5);
+        S.count++;
+        await mark(6,260);
+      }
+      render();
+      if(cellEls[idx]) cellEls[idx].classList.add('entering');
+      await delay(320);
+      const wrapped = usesRing() && idx < S.front;
+      log('<b>'+(S.mode==='deque'?'addRear':'enqueue')+'('+v+')</b> → written to index '+idx+
+          (wrapped?' — rear wrapped around past the end of the array':'')+
+          '. size = '+size()+'.','success');
+    }
+    S.stats.enq++; S.stats.ops++;
+    clearMarks(); renderBadges(); setBusy(false);
   }
 
-  // ---------- DEQUEUE ----------
+  async function doAddFront(){
+    if(S.busy) return;
+    const v=nextValue();
+    setBusy(true);
+    showCode('addFront');
+    await mark(0); await mark(1);
+    if(isFull()){ await mark(2); await overflow('addFront', v); clearMarks(); setBusy(false); return; }
+    if(S.count===0){ S.front=0; } else { S.front=(S.front-1+S.cap)%S.cap; }
+    await mark(3);
+    S.arr[S.front]={v:v,p:null};
+    await mark(4);
+    S.count++;
+    await mark(5,260);
+    render();
+    if(cellEls[S.front]) cellEls[S.front].classList.add('entering');
+    await delay(300);
+    log('<b>addFront('+v+')</b> → front stepped backwards to index '+S.front+' and the value was written there. size = '+size()+'.','success');
+    S.stats.enq++; S.stats.ops++;
+    clearMarks(); renderBadges(); setBusy(false);
+  }
+
   async function doDequeue(){
-    if(state.busy) return;
-    if(isEmpty()){
-      setBusy(true);
-      showCallout('Empty — nothing to dequeue');
-      log('<b>dequeue()</b> rejected — isEmpty() is true (front > rear). There is no one to remove.', 'error');
-      const wrap = document.getElementById('track');
-      wrap.classList.add('shake');
-      await delay(400);
-      wrap.classList.remove('shake');
-      setBusy(false);
-      return;
-    }
+    if(S.busy) return;
     setBusy(true);
-    const idx = state.front;
-    const val = state.arr[idx];
-    const el = slotEls[idx];
-    el.classList.add('leaving');
-    await delay(380);
-    el.classList.remove('leaving');
-    state.arr[idx] = null;
-    const oldFront = state.front;
-    state.front += 1;
+    showCode('dequeue');
+    await mark(0); await mark(1);
+    if(isEmpty()){ await mark(2); await underflow(S.mode==='deque'?'removeFront':'dequeue'); clearMarks(); setBusy(false); return; }
+
+    if(S.mode==='linked'){
+      const v=S.nodes[0].v;
+      await mark(3);
+      if(cellEls[0]) cellEls[0].classList.add('leaving');
+      await delay(340);
+      S.nodes.shift();
+      await mark(4);
+      render();
+      await mark(S.nodes.length===0?5:6,260);
+      log('<b>dequeue()</b> → returned "'+v+'". head now points at '+(S.nodes.length?'"'+S.nodes[0].v+'"':'null')+
+          (S.nodes.length?'':' and tail was reset to null')+'. The old node is freed.','success');
+    } else if(S.mode==='priority'){
+      const item=S.arr[0];
+      await mark(3);
+      if(cellEls[0]) cellEls[0].classList.add('leaving');
+      await delay(320);
+      for(let i=0;i<S.count-1;i++) S.arr[i]=S.arr[i+1];
+      S.arr[S.count-1]=null;
+      S.count--;
+      await mark(4,320);
+      render();
+      await mark(5,240);
+      log('<b>dequeue()</b> → removed "'+item.v+'" (priority '+item.p+') from index 0, then shifted '+S.count+' item(s) left. size = '+size()+'.','success');
+    } else {
+      const idx=S.front;
+      const v=S.arr[idx].v;
+      await mark(3);
+      if(cellEls[idx]) cellEls[idx].classList.add('leaving');
+      await delay(340);
+      S.arr[idx]=null;
+      const old=S.front;
+      if(S.mode==='linear'){
+        S.front+=1;
+        await mark(5);
+      } else {
+        S.front=(S.front+1)%S.cap;
+        S.count--;
+        await mark(5); await mark(6,240);
+      }
+      render();
+      log('<b>'+(S.mode==='deque'?'removeFront':'dequeue')+'()</b> → returned "'+v+'" from index '+idx+
+          '. front moved '+old+' → '+S.front+
+          (S.mode!=='linear'&&S.front===0&&old===S.cap-1?' (wrapped to 0)':'')+'. size = '+size()+'.','success');
+      if(S.mode==='linear' && isEmpty()){
+        if(S.resetOnEmpty){
+          S.front=-1; S.rear=-1;
+          S.arr=new Array(S.cap).fill(null);
+          render();
+          log('&nbsp;&nbsp;the queue just went empty, so front and rear were reset to -1. The whole array is usable again.','step');
+        } else {
+          log('&nbsp;&nbsp;note: front ('+S.front+') > rear ('+S.rear+') so the queue reads empty — but rear is stuck at '+S.rear+' and indices 0–'+S.rear+' are dead space. This is why enqueue can still report full.','step');
+        }
+      }
+    }
+    S.stats.deq++; S.stats.ops++;
+    clearMarks(); renderBadges(); setBusy(false);
+  }
+
+  async function doRemoveRear(){
+    if(S.busy) return;
+    setBusy(true);
+    showCode('removeRear');
+    await mark(0); await mark(1);
+    if(isEmpty()){ await mark(2); await underflow('removeRear'); clearMarks(); setBusy(false); return; }
+    const idx=rearIndex();
+    const v=S.arr[idx].v;
+    await mark(3);
+    if(cellEls[idx]) cellEls[idx].classList.add('leaving');
+    await delay(340);
+    S.arr[idx]=null;
+    S.count--;
+    await mark(4); await mark(5,240);
     render();
-    log('<b>dequeue()</b> → removed "'+val+'" from index '+idx+'. front moved from '+oldFront+' to '+state.front+'. size is now '+size()+'.', 'success');
-    setBusy(false);
+    log('<b>removeRear()</b> → returned "'+v+'" from index '+idx+'. count is now '+S.count+', so rear falls back to index '+(rearIndex()<0?'—':rearIndex())+'.','success');
+    S.stats.deq++; S.stats.ops++;
+    clearMarks(); renderBadges(); setBusy(false);
   }
 
-  // ---------- PEEK ----------
-  async function doPeek(){
-    if(state.busy) return;
-    if(isEmpty()){
-      showCallout('Empty — nothing to peek at');
-      log('<b>peek()</b> rejected — isEmpty() is true. There is no front element yet.', 'error');
-      return;
-    }
+  async function doPeek(which){
+    if(S.busy) return;
     setBusy(true);
-    const el = slotEls[state.front];
-    el.classList.add('highlight');
-    showCallout('front → "'+state.arr[state.front]+'"  (nothing removed)');
-    log('<b>peek()</b> → front element is "'+state.arr[state.front]+'" at index '+state.front+'. Nothing was removed.', 'success');
-    await delay(1100);
-    el.classList.remove('highlight');
-    setBusy(false);
+    showCode(which==='rear'?'peekRear':'peek');
+    await mark(0); await mark(1);
+    if(isEmpty()){ await underflow('peek'); clearMarks(); setBusy(false); return; }
+    const idx=which==='rear'?rearIndex():frontIndex();
+    const item=S.mode==='linked'?S.nodes[idx]:S.arr[idx];
+    await mark(2);
+    const el=cellEls[idx];
+    if(el) el.classList.add('highlight');
+    const label=S.mode==='linked'?(which==='rear'?'tail':'head'):(which==='rear'?'rear':'front');
+    showCallout(label+' → "'+item.v+'"  (nothing removed)');
+    log('<b>peek'+(which==='rear'?'Rear':'')+'()</b> → '+label+' holds "'+item.v+'"'+
+        (S.mode==='linked'?'':' at index '+idx)+
+        (S.mode==='priority'?' with priority '+item.p:'')+'. Nothing was removed.','success');
+    await delay(1000);
+    if(el) el.classList.remove('highlight');
+    S.stats.ops++;
+    clearMarks(); setBusy(false);
   }
 
-  // ---------- TRAVERSAL ----------
   async function doTraverse(){
-    if(state.busy) return;
-    if(isEmpty()){
-      showCallout('Empty — nothing to traverse');
-      log('<b>traversal</b> rejected — isEmpty() is true. There is nothing to walk through.', 'error');
-      return;
-    }
+    if(S.busy) return;
+    if(isEmpty()){ setBusy(true); showCode('traverse'); await underflow('traverse'); clearMarks(); setBusy(false); return; }
     setBusy(true);
-    log('<b>traversal</b> starting at front ('+state.front+'), ending at rear ('+state.rear+').', 'step');
-    for(let i=state.front; i<=state.rear; i++){
-      const el = slotEls[i];
-      el.classList.add('cursor');
-      showCallout('visiting index '+i+' → "'+state.arr[i]+'"');
-      log('&nbsp;&nbsp;step '+(i-state.front+1)+': index '+i+' → "'+state.arr[i]+'"');
-      await delay(560);
-      el.classList.remove('cursor');
+    showCode('traverse');
+    await mark(0); await mark(1);
+    const seq=order();
+    log('<b>traverse()</b> visiting '+seq.length+' element(s) in queue order.','step');
+    for(let k=0;k<seq.length;k++){
+      const idx=seq[k];
+      const item=S.mode==='linked'?S.nodes[idx]:S.arr[idx];
+      const el=cellEls[idx];
+      if(el) el.classList.add('cursor');
+      await mark(S.mode==='linked'?3:(S.mode==='priority'?2:3), 200);
+      showCallout('step '+(k+1)+' → "'+item.v+'"');
+      log('&nbsp;&nbsp;'+(k+1)+'. '+(S.mode==='linked'?'node':'index '+idx)+' → "'+item.v+'"'+
+          (S.mode==='priority'?' (priority '+item.p+')':'')+
+          (usesRing()&&k>0&&idx===0?'  ← wrapped to the start of the array':''));
+      await delay(420);
+      if(el) el.classList.remove('cursor');
     }
-    log('<b>traversal</b> complete — visited '+size()+' element(s) from front to rear.', 'success');
-    setBusy(false);
+    log('<b>traverse()</b> complete — O(n) over '+seq.length+' element(s).','success');
+    S.stats.ops++;
+    clearMarks(); setBusy(false);
   }
 
-  // ---------- isEmpty / isFull ----------
-  function doIsEmpty(){
-    if(state.busy) return;
-    const e = isEmpty();
-    flash(badgeEmpty);
-    showCallout('isEmpty() → '+e);
-    log('<b>isEmpty()</b> → front ('+state.front+') > rear ('+state.rear+')?  → <b>'+e+'</b>', e ? 'error' : 'success');
-  }
-  function doIsFull(){
-    if(state.busy) return;
-    const f = isFull();
-    flash(badgeFull);
-    showCallout('isFull() → '+f);
-    log('<b>isFull()</b> → rear ('+state.rear+') == capacity − 1 ('+(CAPACITY-1)+')?  → <b>'+f+'</b>', f ? 'error' : 'success');
+  async function doSearch(){
+    if(S.busy) return;
+    const target=searchInput.value.trim();
+    if(target===''){ showCallout('Type a value to search for'); return; }
+    setBusy(true);
+    showCode('search');
+    await mark(0);
+    if(isEmpty()){ await underflow('search'); clearMarks(); setBusy(false); return; }
+    const seq=order();
+    let found=-1;
+    for(let k=0;k<seq.length;k++){
+      const idx=seq[k];
+      const item=S.mode==='linked'?S.nodes[idx]:S.arr[idx];
+      const el=cellEls[idx];
+      if(el) el.classList.add('cursor');
+      await mark(2,180);
+      await delay(300);
+      if(el) el.classList.remove('cursor');
+      if(String(item.v)===target){ found=k; if(el) el.classList.add('highlight'); break; }
+    }
+    if(found>=0){
+      showCallout('found "'+target+'" — '+(found===0?'it is next in line':found+' ahead of it'));
+      log('<b>search('+target+')</b> → found after '+(found+1)+' comparison(s): position '+found+' from the front'+
+          (S.mode==='linked'?'':', array index '+seq[found])+'.','success');
+      await delay(900);
+      if(cellEls[seq[found]]) cellEls[seq[found]].classList.remove('highlight');
+    } else {
+      showCallout('"'+target+'" is not in the queue');
+      log('<b>search('+target+')</b> → not found after '+seq.length+' comparison(s). Searching a queue is O(n) — it is not what queues are for.','error');
+    }
+    searchInput.value='';
+    S.stats.ops++;
+    clearMarks(); setBusy(false);
   }
 
-  function doReset(){
-    if(state.busy) return;
-    state.arr = new Array(CAPACITY).fill(null);
-    state.front = -1;
-    state.rear = -1;
-    state.counter = 1;
-    slotEls.forEach(s=> s.classList.remove('filled','entering','leaving','highlight','cursor','shake'));
+  async function doCheck(kind){
+    if(S.busy) return;
+    setBusy(true);
+    showCode(kind);
+    await mark(0);
+    await mark(1,360);
+    if(kind==='isEmpty'){
+      const e=isEmpty(); flash(badgeEmpty);
+      showCallout('isEmpty() → '+e);
+      log('<b>isEmpty()</b> → '+(S.mode==='linked'?'head == null':(S.mode==='linear'?'front ('+S.front+') > rear ('+S.rear+')':'count ('+S.count+') == 0'))+' → <b>'+e+'</b>', e?'error':'success');
+    } else if(kind==='isFull'){
+      const f=isFull(); flash(badgeFull);
+      showCallout('isFull() → '+f);
+      log('<b>isFull()</b> → '+(S.mode==='linked'?'a linked queue has no fixed capacity, so this is always false':(S.mode==='linear'?'rear ('+S.rear+') == capacity − 1 ('+(S.cap-1)+')':'count ('+S.count+') == capacity ('+S.cap+')'))+' → <b>'+f+'</b>', f?'error':'success');
+    } else {
+      flash(badgeSize);
+      showCallout('size() → '+size());
+      log('<b>size()</b> → <b>'+size()+'</b> element(s)'+(S.mode==='linked'?' (counted by walking the list)':' of '+S.cap+' slot(s)')+'.','success');
+    }
+    S.stats.ops++;
+    clearMarks(); renderBadges(); setBusy(false);
+  }
+
+  /* ---------------- bulk helpers ---------------- */
+  async function doFill(){
+    if(S.busy) return;
+    const names=['A','B','C','D','E','F','G','H','I','J'];
+    const n=S.mode==='linked'?5:Math.min(S.cap, S.cap-size());
+    for(let i=0;i<n;i++){
+      valInput.value=names[(S.counter-1+i)%names.length];
+      if(S.mode==='priority') priInput.value=String(Math.floor(Math.random()*5)+1);
+      await doEnqueue();
+      await delay(60);
+    }
+    S.counter+=n;
+  }
+
+  async function doDemo(){
+    if(S.busy) return;
+    doReset(true);
+    const script={
+      linear:[['enq','A'],['enq','B'],['enq','C'],['deq'],['deq'],['peek'],['enq','D'],['enq','E'],['enq','F'],['enq','G'],['enq','H'],['trav']],
+      circular:[['enq','A'],['enq','B'],['enq','C'],['enq','D'],['deq'],['deq'],['enq','E'],['enq','F'],['enq','G'],['trav'],['enq','X']],
+      deque:[['enq','B'],['enq','C'],['addF','A'],['addF','Z'],['remR'],['trav'],['deq'],['peek']],
+      priority:[['enq','A',3],['enq','B',1],['enq','C',5],['enq','D',2],['trav'],['deq'],['deq']],
+      linked:[['enq','A'],['enq','B'],['enq','C'],['deq'],['trav'],['enq','D'],['peek']]
+    }[S.mode];
+    log('<b>demo</b> running a scripted sequence for the '+S.mode+' queue.','step');
+    for(const step of script){
+      if(step[0]==='enq'){ valInput.value=step[1]; if(step[2]) priInput.value=String(step[2]); await doEnqueue(); }
+      else if(step[0]==='addF'){ valInput.value=step[1]; await doAddFront(); }
+      else if(step[0]==='deq') await doDequeue();
+      else if(step[0]==='remR') await doRemoveRear();
+      else if(step[0]==='peek') await doPeek('front');
+      else if(step[0]==='trav') await doTraverse();
+      await delay(180);
+    }
+    log('<b>demo</b> finished.','step');
+  }
+
+  function doReset(quiet){
+    if(S.busy && !quiet) return;
+    S.arr=new Array(S.cap).fill(null);
+    S.front=-1; S.rear=-1; S.count=0; S.nodes=[]; S.counter=1;
+    S.stats={enq:0,deq:0,over:0,under:0,ops:0};
     render();
-    logEl.innerHTML = '';
-    log('Queue reset. capacity = 6, front = -1, rear = -1.', 'step');
+    if(!quiet){
+      logEl.innerHTML='';
+      codeEl.innerHTML=''; codeLabel.textContent='idle';
+      log('Reset. '+(S.mode==='linked'?'head = null, tail = null.':'capacity = '+S.cap+', front = '+(S.mode==='linear'?'-1':'0')+', '+(S.mode==='linear'?'rear = -1':'count = 0')+'.'),'step');
+    }
   }
 
-  buttons.enqueue.addEventListener('click', doEnqueue);
-  enqueueInput.addEventListener('keydown', e=>{ if(e.key === 'Enter') doEnqueue(); });
-  buttons.dequeue.addEventListener('click', doDequeue);
-  buttons.peek.addEventListener('click', doPeek);
-  buttons.traverse.addEventListener('click', doTraverse);
-  buttons.isEmpty.addEventListener('click', doIsEmpty);
-  buttons.isFull.addEventListener('click', doIsFull);
-  buttons.reset.addEventListener('click', doReset);
+  /* ---------------- mode switching ---------------- */
+  function applyMode(mode){
+    S.mode=mode;
+    document.querySelectorAll('.mode').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.mode===mode)));
+    const info=MODE_INFO[mode];
+    stageTitle.textContent=info.title+(mode==='linked'?'':S.cap);
+    modeNote.textContent=info.note;
+    $('notesIntro').textContent=info.intro;
 
-  window.addEventListener('resize', positionPointers);
+    // controls visibility / labels
+    $('cAddFront').classList.toggle('hidden', mode!=='deque');
+    $('cRemoveRear').classList.toggle('hidden', mode!=='deque');
+    priInput.style.display = mode==='priority' ? '' : 'none';
+    $('hEnqueue').textContent = mode==='deque' ? 'Add to rear' : 'Enqueue';
+    $('pEnqueue').textContent = mode==='priority'
+      ? 'Add a value with a priority from 1 (highest) to 9. Blank picks one at random.'
+      : (mode==='linked' ? 'Allocate a node and link it after the current tail.' : 'Add a value to the back of the line.');
+    BTN.enqueue.textContent = mode==='deque' ? 'Add to rear' : 'Add to back';
+    BTN.dequeue.textContent = mode==='deque' ? 'Remove from front' : 'Remove from front';
+    BTN.isFull.disabled=false;
+    $('fieldReset').style.display = mode==='linear' ? '' : 'none';
+    $('capSel').disabled = mode==='linked';
+
+    // notes table
+    const rows=['<tr><th>Operation</th><th>Time</th><th>What it does</th></tr>']
+      .concat(OPS_TABLE[mode].map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>'));
+    $('notesTable').innerHTML=rows.join('');
+
+    doReset();
+  }
+
+  /* ---------------- wiring ---------------- */
+  document.querySelectorAll('.mode').forEach(b=>{
+    b.addEventListener('click', ()=>{ if(!S.busy) applyMode(b.dataset.mode); });
+  });
+  $('resetEmptyChk').addEventListener('change', e=>{ S.resetOnEmpty=e.target.checked; });
+  $('capSel').addEventListener('change', e=>{ S.cap=parseInt(e.target.value,10); applyMode(S.mode); });
+  $('speedSel').addEventListener('change', e=>{ S.speed=parseFloat(e.target.value); });
+  $('btnTheme').addEventListener('click', ()=>{
+    const cur=document.documentElement.getAttribute('data-theme');
+    const isDark = cur ? cur==='dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme', isDark?'light':'dark');
+  });
+
+  BTN.enqueue.addEventListener('click', doEnqueue);
+  BTN.addFront.addEventListener('click', doAddFront);
+  BTN.dequeue.addEventListener('click', doDequeue);
+  BTN.removeRear.addEventListener('click', doRemoveRear);
+  BTN.peek.addEventListener('click', ()=>doPeek('front'));
+  BTN.peekRear.addEventListener('click', ()=>doPeek('rear'));
+  BTN.traverse.addEventListener('click', doTraverse);
+  BTN.search.addEventListener('click', doSearch);
+  BTN.isEmpty.addEventListener('click', ()=>doCheck('isEmpty'));
+  BTN.isFull.addEventListener('click', ()=>doCheck('isFull'));
+  BTN.size.addEventListener('click', ()=>doCheck('size'));
+  BTN.fill.addEventListener('click', doFill);
+  BTN.demo.addEventListener('click', doDemo);
+  BTN.reset.addEventListener('click', ()=>doReset(false));
+  $('btnClearLog').addEventListener('click', ()=>{ logEl.innerHTML=''; });
+
+  valInput.addEventListener('keydown', e=>{ if(e.key==='Enter') doEnqueue(); });
+  priInput.addEventListener('keydown', e=>{ if(e.key==='Enter') doEnqueue(); });
+  searchInput.addEventListener('keydown', e=>{ if(e.key==='Enter') doSearch(); });
+
+  document.addEventListener('keydown', e=>{
+    if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||S.busy) return;
+    if(e.key==='e'||e.key==='E') doEnqueue();
+    else if(e.key==='d'||e.key==='D') doDequeue();
+    else if(e.key==='p'||e.key==='P') doPeek('front');
+    else if(e.key==='t'||e.key==='T') doTraverse();
+  });
+
+  applyMode('linear');
+  log('Queue created. Press <b>e</b> to enqueue, <b>d</b> to dequeue, <b>p</b> to peek, <b>t</b> to traverse.','step');
 })();
 </script>
 </body>
