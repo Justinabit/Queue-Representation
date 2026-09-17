@@ -75,7 +75,7 @@
          transition:background .25s ease,color .25s ease,border-color .25s ease,transform .2s ease;}
   .badge.b-true{border-color:transparent;background:var(--accent-coral-soft);color:var(--accent-coral);}
   .badge.b-false{border-color:transparent;background:var(--accent-teal-soft);color:var(--accent-teal);}
-  .badge.flash{animation:badgePulse .5s ease;}
+  .badge.flash{animation:badgePulse .3s ease;}
   @keyframes badgePulse{0%{transform:scale(1);}40%{transform:scale(1.09);}100%{transform:scale(1);}}
 
   .stage{min-height:200px;display:flex;align-items:center;justify-content:center;
@@ -93,11 +93,11 @@
   .slot .pri{font-family:var(--font-mono);font-size:9.5px;color:var(--accent-violet);
              background:var(--accent-violet-soft);border-radius:5px;padding:1px 5px;margin-top:3px;}
   .slot.filled{border-style:solid;border-color:var(--accent-teal);background:var(--accent-teal-soft);}
-  .slot.entering{animation:popIn .38s cubic-bezier(.34,1.56,.64,1);}
-  .slot.leaving{animation:leaveOut .38s ease;}
+  .slot.entering{animation:popIn .20s cubic-bezier(.34,1.56,.64,1);}
+  .slot.leaving{animation:leaveOut .20s ease;}
   .slot.highlight{box-shadow:0 0 0 3px var(--accent-amber);border-color:var(--accent-amber);}
   .slot.cursor{box-shadow:0 0 0 3px var(--accent-teal);transform:translateY(-5px);}
-  .slot.shake{animation:shake .4s ease;}
+  .slot.shake{animation:shake .22s ease;}
   .slot .tag{position:absolute;font-family:var(--font-mono);font-size:9.5px;font-weight:700;
              padding:2px 6px;border-radius:5px;white-space:nowrap;}
   .slot .tag.t-front{top:-22px;background:var(--accent-amber-soft);color:var(--accent-amber);}
@@ -107,9 +107,9 @@
   .ring{position:relative;width:min(340px,82vw);aspect-ratio:1;margin:18px auto;}
   .ring .slot{position:absolute;left:50%;top:50%;width:66px;height:66px;transform:translate(-50%,-50%);}
   .ring .slot.cursor{transform:translate(-50%,-50%) scale(1.1);}
-  .ring .slot.shake{animation:shakeRing .4s ease;}
-  .ring .slot.entering{animation:popInRing .38s cubic-bezier(.34,1.56,.64,1);}
-  .ring .slot.leaving{animation:leaveOutRing .38s ease;}
+  .ring .slot.shake{animation:shakeRing .22s ease;}
+  .ring .slot.entering{animation:popInRing .20s cubic-bezier(.34,1.56,.64,1);}
+  .ring .slot.leaving{animation:leaveOutRing .20s ease;}
   @keyframes popInRing{from{opacity:0;transform:translate(-50%,-50%) scale(.4);}to{opacity:1;transform:translate(-50%,-50%) scale(1);}}
   @keyframes leaveOutRing{0%{opacity:1;transform:translate(-50%,-50%) scale(1);}100%{opacity:0;transform:translate(-50%,-50%) scale(.4);}}
   @keyframes shakeRing{0%,100%{transform:translate(-50%,-50%);}25%{transform:translate(calc(-50% - 6px),-50%);}
@@ -129,8 +129,8 @@
   .lnode .data{padding:14px 14px;font-family:var(--font-mono);font-size:18px;font-weight:700;min-width:54px;text-align:center;}
   .lnode .next{padding:14px 9px;font-family:var(--font-mono);font-size:10px;color:var(--text-dim);
                border-left:1.5px solid var(--accent-teal);display:flex;align-items:center;}
-  .lnode.entering{animation:popIn .38s cubic-bezier(.34,1.56,.64,1);}
-  .lnode.leaving{animation:leaveOut .38s ease;}
+  .lnode.entering{animation:popIn .20s cubic-bezier(.34,1.56,.64,1);}
+  .lnode.leaving{animation:leaveOut .20s ease;}
   .lnode.highlight{box-shadow:0 0 0 3px var(--accent-amber);}
   .lnode.cursor{box-shadow:0 0 0 3px var(--accent-teal);}
   .lnode .tag{position:absolute;left:50%;transform:translateX(-50%);font-family:var(--font-mono);
@@ -573,7 +573,7 @@
     callout.textContent=text;
     callout.classList.add('show');
     clearTimeout(showCallout._t);
-    showCallout._t=setTimeout(()=>callout.classList.remove('show'), 2400);
+    showCallout._t=setTimeout(()=>callout.classList.remove('show'), 1500);
   }
 
   function flash(el){ el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
@@ -593,7 +593,7 @@
   async function mark(i, ms){
     codeLines.forEach(l=>l.classList.remove('active'));
     if(codeLines[i]) codeLines[i].classList.add('active');
-    await delay(ms===undefined?300:ms);
+    await delay(ms===undefined?160:ms);
   }
   function clearMarks(){ codeLines.forEach(l=>l.classList.remove('active')); }
 
@@ -697,7 +697,7 @@
     const el=cellEls[idx];
     if(!el) return Promise.resolve();
     el.classList.add(cls);
-    return delay(ms===undefined?420:ms).then(()=>el.classList.remove(cls));
+    return delay(ms===undefined?220:ms).then(()=>el.classList.remove(cls));
   }
 
   /* ---------------- operations ---------------- */
@@ -729,7 +729,7 @@
     S.stats.under++; S.stats.ops++;
     showCallout('Empty — nothing to '+label);
     log('<b>'+label+'()</b> rejected. Underflow: the queue holds nothing.', 'error');
-    await delay(260);
+    await delay(140);
     renderBadges();
   }
 
@@ -749,21 +749,21 @@
       render();
       const el=cellEls[S.nodes.length-1];
       if(el) el.classList.add('entering');
-      await mark(S.nodes.length===1?4:6, 340);
-      await mark(S.nodes.length===1?4:7, 300);
+      await mark(S.nodes.length===1?4:6, 180);
+      await mark(S.nodes.length===1?4:7, 160);
       log('<b>enqueue('+v+')</b> → new node allocated. '+
           (S.nodes.length===1?'head and tail both point at it.':'old tail.next now points at it; tail moved forward.')+
           ' size = '+size()+'.','success');
     } else if(S.mode==='priority'){
       let i=S.count-1;
       await mark(3);
-      while(i>=0 && S.arr[i].p>p){ S.arr[i+1]=S.arr[i]; S.arr[i]=null; i--; await mark(5,220); render(); }
+      while(i>=0 && S.arr[i].p>p){ S.arr[i+1]=S.arr[i]; S.arr[i]=null; i--; await mark(5,120); render(); }
       await mark(7);
       S.arr[i+1]={v:v,p:p};
       S.count++;
       render();
       if(cellEls[i+1]) cellEls[i+1].classList.add('entering');
-      await mark(8,300);
+      await mark(8,160);
       log('<b>enqueue('+v+', priority '+p+')</b> → inserted at index '+(i+1)+' after shifting '+(S.count-1-(i+1))+' item(s) right. Highest priority sits at index 0.','success');
     } else {
       let idx;
@@ -782,11 +782,11 @@
         S.arr[idx]={v:v,p:null};
         await mark(5);
         S.count++;
-        await mark(6,260);
+        await mark(6,140);
       }
       render();
       if(cellEls[idx]) cellEls[idx].classList.add('entering');
-      await delay(320);
+      await delay(170);
       const wrapped = usesRing() && idx < S.front;
       log('<b>'+(S.mode==='deque'?'addRear':'enqueue')+'('+v+')</b> → written to index '+idx+
           (wrapped?' — rear wrapped around past the end of the array':'')+
@@ -808,10 +808,10 @@
     S.arr[S.front]={v:v,p:null};
     await mark(4);
     S.count++;
-    await mark(5,260);
+    await mark(5,140);
     render();
     if(cellEls[S.front]) cellEls[S.front].classList.add('entering');
-    await delay(300);
+    await delay(160);
     log('<b>addFront('+v+')</b> → front stepped backwards to index '+S.front+' and the value was written there. size = '+size()+'.','success');
     S.stats.enq++; S.stats.ops++;
     clearMarks(); renderBadges(); setBusy(false);
@@ -828,31 +828,31 @@
       const v=S.nodes[0].v;
       await mark(3);
       if(cellEls[0]) cellEls[0].classList.add('leaving');
-      await delay(340);
+      await delay(180);
       S.nodes.shift();
       await mark(4);
       render();
-      await mark(S.nodes.length===0?5:6,260);
+      await mark(S.nodes.length===0?5:6,140);
       log('<b>dequeue()</b> → returned "'+v+'". head now points at '+(S.nodes.length?'"'+S.nodes[0].v+'"':'null')+
           (S.nodes.length?'':' and tail was reset to null')+'. The old node is freed.','success');
     } else if(S.mode==='priority'){
       const item=S.arr[0];
       await mark(3);
       if(cellEls[0]) cellEls[0].classList.add('leaving');
-      await delay(320);
+      await delay(170);
       for(let i=0;i<S.count-1;i++) S.arr[i]=S.arr[i+1];
       S.arr[S.count-1]=null;
       S.count--;
-      await mark(4,320);
+      await mark(4,170);
       render();
-      await mark(5,240);
+      await mark(5,130);
       log('<b>dequeue()</b> → removed "'+item.v+'" (priority '+item.p+') from index 0, then shifted '+S.count+' item(s) left. size = '+size()+'.','success');
     } else {
       const idx=S.front;
       const v=S.arr[idx].v;
       await mark(3);
       if(cellEls[idx]) cellEls[idx].classList.add('leaving');
-      await delay(340);
+      await delay(180);
       S.arr[idx]=null;
       const old=S.front;
       if(S.mode==='linear'){
@@ -861,7 +861,7 @@
       } else {
         S.front=(S.front+1)%S.cap;
         S.count--;
-        await mark(5); await mark(6,240);
+        await mark(5); await mark(6,130);
       }
       render();
       log('<b>'+(S.mode==='deque'?'removeFront':'dequeue')+'()</b> → returned "'+v+'" from index '+idx+
@@ -892,10 +892,10 @@
     const v=S.arr[idx].v;
     await mark(3);
     if(cellEls[idx]) cellEls[idx].classList.add('leaving');
-    await delay(340);
+    await delay(180);
     S.arr[idx]=null;
     S.count--;
-    await mark(4); await mark(5,240);
+    await mark(4); await mark(5,130);
     render();
     log('<b>removeRear()</b> → returned "'+v+'" from index '+idx+'. count is now '+S.count+', so rear falls back to index '+(rearIndex()<0?'—':rearIndex())+'.','success');
     S.stats.deq++; S.stats.ops++;
@@ -918,7 +918,7 @@
     log('<b>peek'+(which==='rear'?'Rear':'')+'()</b> → '+label+' holds "'+item.v+'"'+
         (S.mode==='linked'?'':' at index '+idx)+
         (S.mode==='priority'?' with priority '+item.p:'')+'. Nothing was removed.','success');
-    await delay(1000);
+    await delay(550);
     if(el) el.classList.remove('highlight');
     S.stats.ops++;
     clearMarks(); setBusy(false);
@@ -937,12 +937,12 @@
       const item=S.mode==='linked'?S.nodes[idx]:S.arr[idx];
       const el=cellEls[idx];
       if(el) el.classList.add('cursor');
-      await mark(S.mode==='linked'?3:(S.mode==='priority'?2:3), 200);
+      await mark(S.mode==='linked'?3:(S.mode==='priority'?2:3), 110);
       showCallout('step '+(k+1)+' → "'+item.v+'"');
       log('&nbsp;&nbsp;'+(k+1)+'. '+(S.mode==='linked'?'node':'index '+idx)+' → "'+item.v+'"'+
           (S.mode==='priority'?' (priority '+item.p+')':'')+
           (usesRing()&&k>0&&idx===0?'  ← wrapped to the start of the array':''));
-      await delay(420);
+      await delay(220);
       if(el) el.classList.remove('cursor');
     }
     log('<b>traverse()</b> complete — O(n) over '+seq.length+' element(s).','success');
@@ -965,8 +965,8 @@
       const item=S.mode==='linked'?S.nodes[idx]:S.arr[idx];
       const el=cellEls[idx];
       if(el) el.classList.add('cursor');
-      await mark(2,180);
-      await delay(300);
+      await mark(2,100);
+      await delay(160);
       if(el) el.classList.remove('cursor');
       if(String(item.v)===target){ found=k; if(el) el.classList.add('highlight'); break; }
     }
@@ -974,7 +974,7 @@
       showCallout('found "'+target+'" — '+(found===0?'it is next in line':found+' ahead of it'));
       log('<b>search('+target+')</b> → found after '+(found+1)+' comparison(s): position '+found+' from the front'+
           (S.mode==='linked'?'':', array index '+seq[found])+'.','success');
-      await delay(900);
+      await delay(480);
       if(cellEls[seq[found]]) cellEls[seq[found]].classList.remove('highlight');
     } else {
       showCallout('"'+target+'" is not in the queue');
@@ -990,7 +990,7 @@
     setBusy(true);
     showCode(kind);
     await mark(0);
-    await mark(1,360);
+    await mark(1,190);
     if(kind==='isEmpty'){
       const e=isEmpty(); flash(badgeEmpty);
       showCallout('isEmpty() → '+e);
@@ -1017,7 +1017,7 @@
       valInput.value=names[(S.counter-1+i)%names.length];
       if(S.mode==='priority') priInput.value=String(Math.floor(Math.random()*5)+1);
       await doEnqueue();
-      await delay(60);
+      await delay(40);
     }
     S.counter+=n;
   }
@@ -1040,7 +1040,7 @@
       else if(step[0]==='remR') await doRemoveRear();
       else if(step[0]==='peek') await doPeek('front');
       else if(step[0]==='trav') await doTraverse();
-      await delay(180);
+      await delay(100);
     }
     log('<b>demo</b> finished.','step');
   }
